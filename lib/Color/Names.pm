@@ -38,7 +38,7 @@ INIT {
 }
 
 sub color(Str $n) is export {
-	my $retVal = [];
+	my $retVal;
 
 	for (@color_lists) -> $cl {
 		$retVal.push: $_ => ::("Color::Names::{$cl}::%Colors"){$n}
@@ -46,7 +46,46 @@ sub color(Str $n) is export {
 	}
 
 	# cw: Simplify return value if only one match.
-	$retVal = $retVal[0].value if $retVal.elems == 1;
+	$retVal.elems == 1 ??
+		$retVal[0].value !! $retVal;
+}
 
-	$retVal;
+sub hex(Str $n) is export {
+	given color($n) {
+		when Hash {
+			$_<hex>;
+		}
+
+		when Array {
+			$_.map: { $_.value<hex> }
+		}
+	}
+}
+
+sub rgb(Str $n, :$hash) is export {
+	given color($n) {
+		when Hash {
+			$hash.defined ??
+				(
+					red   => $_<red>, 
+					green => $_<green>, 
+					blue  => $_<blue> 
+				)
+				!!
+				( $_<red>, $_<green>, $_<blue>);
+		}
+
+		when Array {
+			$_.map: { 
+				$hash.defined ??
+				{ 
+					red   => $_.value<red>, 
+					green => $_.value<green>, 
+					blue  => $_.value<blue> 
+				}
+				!!
+				[ $_.value<red>, $_.value<gree>, $_.value<blue> ] 
+			};
+		}
+	}
 }
