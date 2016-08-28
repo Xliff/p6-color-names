@@ -26,28 +26,46 @@ BEGIN {
 	}
 }
 
-INIT {
+sub EXPORT {
 	# cw: Really want a SELECTIVE way to load these, instead of doing
 	#     them all at compile time.
 
-	# cw: -XXX- breaks rakudo. Won't compile!
 	#require ::("Color::Names::$_") for @color_lists;
 
-	# cw: Testing ONLY.
-	require ::("Color::Names::Cloford");
+	{
+		'&color' 	=> &color,
+		'&hex'		=> &hex,
+		'&rgb'		=> &rgb
+	}
+	
 }
 
-sub color(Str $n) is export {
+sub color(Str $n, :$obj) is export {
 	my $retVal;
 
+	if $obj.defined && !(try require Color).WHAT.perl.defined {
+		die "Color module cannot be found.";
+	}
+
+
 	for (@color_lists) -> $cl {
-		$retVal.push: $_ => ::("Color::Names::{$cl}::%Colors"){$n}
+		my $c;
+		$c = ::("Color::Names::{$cl}::%Colors"){$n}
 			if ::("Color::Names::{$cl}::%Colors"){$n}:exists;
+
+		if $c.defined {
+			$retVal.push: $_ => $obj.defined ??
+				::("Color").new($c<hex>)
+				!!
+				$c
+		}
 	}
 
 	# cw: Simplify return value if only one match.
-	$retVal.elems == 1 ??
-		$retVal[0].value !! $retVal;
+	$retVal.defined ??
+		($retVal.elems == 1 ?? $retVal[0].value !! $retVal)
+		!!
+		Nil;
 }
 
 sub hex(Str $n) is export {
@@ -58,6 +76,10 @@ sub hex(Str $n) is export {
 
 		when Array {
 			$_.map: { $_.value<hex> }
+		}
+
+		default {
+			Nil;
 		}
 	}
 }
@@ -78,7 +100,7 @@ sub rgb(Str $n, :$hash) is export {
 		when Array {
 			$_.map: { 
 				$hash.defined ??
-				{ 
+				{
 					red   => $_.value<red>, 
 					green => $_.value<green>, 
 					blue  => $_.value<blue> 
@@ -86,6 +108,10 @@ sub rgb(Str $n, :$hash) is export {
 				!!
 				[ $_.value<red>, $_.value<gree>, $_.value<blue> ] 
 			};
+		}
+
+		default {
+			Nil;
 		}
 	}
 }
