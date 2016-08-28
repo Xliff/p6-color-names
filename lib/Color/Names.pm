@@ -29,7 +29,11 @@ BEGIN {
 INIT {
 	# cw: Really want a SELECTIVE way to load these, instead of doing
 	#     them all at compile time.
+
+	# cw: -XXX- breaks rakudo. Won't compile!
 	#require ::("Color::Names::$_") for @color_lists;
+
+	# cw: Testing ONLY.
 	require ::("Color::Names::Cloford");
 }
 
