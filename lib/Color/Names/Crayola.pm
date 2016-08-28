@@ -1,6 +1,6 @@
 use v6.c;
 
-unit class Color::Names::Crayola;
+unit package Color::Names::Crayola;
 
 my %Colors = (
 	'Red'			=> { hex => '#ED0A3F', red => 237, green =>  10, blue =>  63 },

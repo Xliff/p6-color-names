@@ -1,8 +1,8 @@
 use v6.c;
 
-unit class Color::Names::Cloford;
+unit package Color::Names::Cloford;
 
-my %Colors = (
+our %Colors = (
 	'crimson'		=> { hex => '#DC143C', red => 220, green =>  20, blue =>  60 },
 	'lightpink'		=> { hex => '#FFB6C1', red => 255, green => 182, blue => 193 },
 	'lightpink1'		=> { hex => '#FFAEB9', red => 255, green => 174, blue => 185 },

@@ -59,7 +59,7 @@ die "Cannot open output file X11.pm";
 $oh.print(qq:to<EOF>);
 use v6.c;
 
-unit class Color::Names::Crayola;
+unit package Color::Names::Crayola;
 
 my \%Colors = (
 { @l.join(",\n") }

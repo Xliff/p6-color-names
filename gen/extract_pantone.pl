@@ -47,7 +47,7 @@ die "Cannot open output file X11.pm";
 $oh.print(qq:to<EOF>);
 use v6.c;
 
-unit class Color::Names::Pantone;
+unit package Color::Names::Pantone;
 
 my \%Colors = (
 { @l.join(",\n") }

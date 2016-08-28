@@ -1,6 +1,6 @@
 use v6.c;
 
-unit class Color::Names::Pantone;
+unit package Color::Names::Pantone;
 
 my %Colors = (
 	'Yellow C'		=> { hex => '#FEDD00', red => 254, green => 221, blue =>   0 },

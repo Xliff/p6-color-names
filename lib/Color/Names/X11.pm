@@ -1,6 +1,6 @@
 use v6.c;
 
-unit class Color::Names::X11;
+unit package Color::Names::X11;
 
 my %Colors = (
 	'Alice Blue'		=> { hex => '#F0F8FF', red => 240, green => 248, blue => 255 },
