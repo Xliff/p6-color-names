@@ -14,7 +14,7 @@ my $m;
 #	}
 #');
 
-my $fh = "X11_color_names".IO.open(:r)
+my $fh = "html_color_names.asp".IO.open(:r)
 or
 die "Can't open X11 color file";
 
@@ -24,9 +24,9 @@ $fh.close;
 #$p5.call('mojo_new', $c);
 $m = Mojo::DOM.new($c);
 my @l;
-for @($m.find('#mw-content-text tr th span a').to_array) -> $e {
-	my $n = $e.all_text;
-	my $h = $e.parent.parent.next.all_text;
+for @($m.find('table.w3-table-all tr td:first-child').to_array) -> $e {
+	my $n = $e.all_text.trim;
+	my $h = $e.next.all_text.lc;
 	my ($r, $g, $b) = $h.substr(1).comb(2).map({ "0x$_".fmt('%3d') });
 	my $et = do given $n {
 		when .chars < 6  	{ "\t\t\t" }
@@ -37,14 +37,14 @@ for @($m.find('#mw-content-text tr th span a').to_array) -> $e {
 	@l.push: "\t'{$n}'{$et}=> \{ hex => '$h', red => $r, green => $g, blue => $b \}";
 }
 
-my $oh = open('../lib/Color/Names/X11.pm', :w)
+my $oh = open('../lib/Color/Names/HTML.pm', :w)
 or
-die "Cannot open output file X11.pm";
+die "Cannot open output file HTML.pm";
 
 $oh.print(qq:to<EOF>);
 use v6.c;
 
-unit package Color::Names::X11;
+unit package Color::Names::HTML;
 
 my \%Colors = (
 { @l.join(",\n") }

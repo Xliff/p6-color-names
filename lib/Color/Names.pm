@@ -2,12 +2,12 @@ use v6.c;
 
 unit package Color::Names;
 
-# cw: $*REPO.repo-chain list of CompUnit::Repository::Installation objects
-#     that contain path info.
 
 my @color_lists;
 my $color-support;
 
+# cw: $*REPO.repo-chain list of CompUnit::Repository::Installation objects
+#     that contain path info.
 BEGIN {
 	$color-support = (try require ::("Color")) !~~ Nil;
 
