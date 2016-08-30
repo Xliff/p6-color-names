@@ -46,7 +46,7 @@ use v6.c;
 
 unit class Color::Names::X11;
 
-my %colors = 
+our %colors = 
 $l;
 EOF
 

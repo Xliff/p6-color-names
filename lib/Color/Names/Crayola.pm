@@ -2,7 +2,7 @@ use v6.c;
 
 unit package Color::Names::Crayola;
 
-my %Colors = (
+our %Colors = (
 	'Red'			=> { hex => '#ED0A3F', red => 237, green =>  10, blue =>  63 },
 	'Maroon'		=> { hex => '#C32148', red => 195, green =>  33, blue =>  72 },
 	'Scarlet'		=> { hex => '#FD0E35', red => 253, green =>  14, blue =>  53 },

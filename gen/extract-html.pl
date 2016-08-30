@@ -46,7 +46,7 @@ use v6.c;
 
 unit package Color::Names::HTML;
 
-my \%Colors = (
+our \%Colors = (
 { @l.join(",\n") }
 );
 EOF

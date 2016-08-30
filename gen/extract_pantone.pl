@@ -49,7 +49,7 @@ use v6.c;
 
 unit package Color::Names::Pantone;
 
-my \%Colors = (
+our \%Colors = (
 { @l.join(",\n") }
 );
 EOF

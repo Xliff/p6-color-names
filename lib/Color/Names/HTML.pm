@@ -2,7 +2,7 @@ use v6.c;
 
 unit package Color::Names::HTML;
 
-my %Colors = (
+our %Colors = (
 	'AliceBlue'		=> { hex => '#f0f8ff', red => 240, green => 248, blue => 255 },
 	'AntiqueWhite'		=> { hex => '#faebd7', red => 250, green => 235, blue => 215 },
 	'Aqua'			=> { hex => '#00ffff', red =>   0, green => 255, blue => 255 },

@@ -4,14 +4,13 @@ my @color_lists_found;
 my @color_list;
 my $color-support;
 
-sub EXPORT(*@a) {
-	# cw: Limit the lists.
+multi sub EXPORT(*@a) {
+	# cw: Implement SELECTIVE loading if necessary.
 	@color_list = @a.elems > 0 ?? 
-		@color_lists_found.grep({ $_ eq @a.any })
+		@color_lists_found.grep(@a.any)
 		!!
 		@color_lists_found;
 
-	# cw: Implement SELECTIVE loading.
 	for @color_list -> $cl {
 		require ::("Color::Names::{$cl}");
 	}
@@ -64,7 +63,7 @@ our sub color(Str $n, :$obj) is export {
 			if ::("Color::Names::{$cl}::%Colors"){$n}:exists;
 
 		if $c.defined {
-			$retVal.push: $_ => $obj.defined ??
+			$retVal.push: $cl => $obj.defined ??
 				::("Color").new(:hex($c<hex>))
 				!!
 				$c

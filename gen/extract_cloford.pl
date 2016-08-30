@@ -72,7 +72,7 @@ use v6.c;
 
 unit package Color::Names::Cloford;
 
-my \%Colors = (
+our \%Colors = (
 { @l.join(",\n") }
 );
 EOF

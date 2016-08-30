@@ -2,7 +2,7 @@ use v6.c;
 
 unit package Color::Names::Pantone;
 
-my %Colors = (
+our %Colors = (
 	'Yellow C'		=> { hex => '#FEDD00', red => 254, green => 221, blue =>   0 },
 	'Yellow 012 C'		=> { hex => '#FFD700', red => 255, green => 215, blue =>   0 },
 	'Orange 021 C'		=> { hex => '#FE5000', red => 254, green =>  80, blue =>   0 },

@@ -2,7 +2,7 @@ use v6.c;
 
 unit package Color::Names::X11;
 
-my %Colors = (
+our %Colors = (
 	'Alice Blue'		=> { hex => '#F0F8FF', red => 240, green => 248, blue => 255 },
 	'Antique White'		=> { hex => '#FAEBD7', red => 250, green => 235, blue => 215 },
 	'Aqua'			=> { hex => '#00FFFF', red =>   0, green => 255, blue => 255 },
