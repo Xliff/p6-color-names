@@ -1,10 +1,28 @@
 use v6.c;
 
-unit package Color::Names;
-
-
-my @color_lists;
+my @color_lists_found;
+my @color_list;
 my $color-support;
+
+sub EXPORT(*@a) {
+	# cw: Limit the lists.
+	@color_list = @a.elems > 0 ?? 
+		@color_lists_found.grep({ $_ eq @a.any })
+		!!
+		@color_lists_found;
+
+	# cw: Implement SELECTIVE loading.
+	for @color_list -> $cl {
+		require ::("Color::Names::{$cl}");
+	}
+
+	# cw: What we always export.
+	{
+	 	'&color' 	=> &Color::Names::color,
+	 	'&hex'		=> &Color::Names::hex,
+	 	'&rgb'		=> &Color::Names::rgb
+	}
+}
 
 # cw: $*REPO.repo-chain list of CompUnit::Repository::Installation objects
 #     that contain path info.
@@ -21,7 +39,7 @@ BEGIN {
 			for dir("{$p}/Color/Names") -> $f { 
 				my $b = $f.basename;
 				$b ~~ s/ '.' pm6?//;
-				push @color_lists: $b;
+				push @color_lists_found: $b;
 			}
 
 			last;
@@ -35,31 +53,15 @@ INIT {
 	}
 }
 
-sub EXPORT {
-	# cw: The only reason this sub exists is for SELECTIVE Color list loading. 
-	#     If that falls out of scope, then this sub will be removed.
-	for @color_lists -> $cl {
-		require ::("Color::Names::{$cl}");
-	}
+unit module Color::Names;
 
-	# cw: Really want a SELECTIVE way to load these, instead of doing
-	#     them all at compile time.
-	{
-		'&color' 	=> &color,
-		'&hex'		=> &hex,
-		'&rgb'		=> &rgb
-	}
-}
-
-sub color(Str $n, :$obj) is export {
+our sub color(Str $n, :$obj) is export {
 	my $retVal;
 
-	for (@color_lists) -> $cl {
+	for (@color_list) -> $cl {
 		my $c;
 		$c = ::("Color::Names::{$cl}::%Colors"){$n}
 			if ::("Color::Names::{$cl}::%Colors"){$n}:exists;
-
-		::("Color").HOW.^name.say;
 
 		if $c.defined {
 			$retVal.push: $_ => $obj.defined ??
@@ -76,7 +78,7 @@ sub color(Str $n, :$obj) is export {
 		Nil;
 }
 
-sub hex(Str $n) is export {
+our sub hex(Str $n) is export {
 	given color($n) {
 		when Hash {
 			$_<hex>;
@@ -92,7 +94,7 @@ sub hex(Str $n) is export {
 	}
 }
 
-sub rgb(Str $n, :$hash) is export {
+our sub rgb(Str $n, :$hash) is export {
 	given color($n) {
 		when Hash {
 			$hash.defined ??
