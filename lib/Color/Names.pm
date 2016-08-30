@@ -33,14 +33,14 @@ INIT {
 	if $color-support {
 		require Color;
 	}
-	for @color_lists -> $cl {
-		require ::("Color::Names::{$cl}");
-	}
 }
 
 sub EXPORT {
 	# cw: The only reason this sub exists is for SELECTIVE Color list loading. 
 	#     If that falls out of scope, then this sub will be removed.
+	for @color_lists -> $cl {
+		require ::("Color::Names::{$cl}");
+	}
 
 	# cw: Really want a SELECTIVE way to load these, instead of doing
 	#     them all at compile time.
