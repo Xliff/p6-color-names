@@ -70,7 +70,7 @@ die "Cannot open output file X11.pm";
 $oh.print(qq:to<EOF>);
 use v6.c;
 
-unit class Color::Names::Cloford;
+unit package Color::Names::Cloford;
 
 my \%Colors = (
 { @l.join(",\n") }

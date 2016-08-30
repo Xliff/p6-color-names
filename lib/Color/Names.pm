@@ -6,8 +6,11 @@ unit package Color::Names;
 #     that contain path info.
 
 my @color_lists;
+my $color-support;
 
 BEGIN {
+	$color-support = (try require ::("Color")) !~~ Nil;
+
 	for @($*REPO.repo-chain).grep({
 		$_ ~~ CompUnit::Repository::FileSystem
 		||
@@ -26,36 +29,41 @@ BEGIN {
 	}
 }
 
+INIT { 
+	if $color-support {
+		require Color;
+	}
+	for @color_lists -> $cl {
+		require ::("Color::Names::{$cl}");
+	}
+}
+
 sub EXPORT {
+	# cw: The only reason this sub exists is for SELECTIVE Color list loading. 
+	#     If that falls out of scope, then this sub will be removed.
+
 	# cw: Really want a SELECTIVE way to load these, instead of doing
 	#     them all at compile time.
-
-	#require ::("Color::Names::$_") for @color_lists;
-
 	{
 		'&color' 	=> &color,
 		'&hex'		=> &hex,
 		'&rgb'		=> &rgb
 	}
-	
 }
 
 sub color(Str $n, :$obj) is export {
 	my $retVal;
-
-	if $obj.defined && !(try require Color).WHAT.perl.defined {
-		die "Color module cannot be found.";
-	}
-
 
 	for (@color_lists) -> $cl {
 		my $c;
 		$c = ::("Color::Names::{$cl}::%Colors"){$n}
 			if ::("Color::Names::{$cl}::%Colors"){$n}:exists;
 
+		::("Color").HOW.^name.say;
+
 		if $c.defined {
 			$retVal.push: $_ => $obj.defined ??
-				::("Color").new($c<hex>)
+				::("Color").new(:hex($c<hex>))
 				!!
 				$c
 		}
