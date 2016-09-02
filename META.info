@@ -1,0 +1,19 @@
+{
+    "name" : "Color::Names",
+    "perl" : "6.c",
+    "version" : "0.0.1",
+    "authors" : [ "github:Xliff", "Clifton Wood" ],
+    "description" : "Convert color names to HEX or RGB values.",
+    "depends" : [ ],
+    "build-depends" : [ ],
+    "test-depends" : [ "Test::META" ],
+    "provides" : {
+        "Color::Names"          : "lib/Color/Names.pm",
+        "Color::Names::Crayola" : "lib/Color/Names/Crayola.pm",
+        "Color::Names::Pantone" : "lib/Color/Names/Pantone.pm",
+        "Color::Names::X11"     : "lib/Color/Names/X11.pm",
+        "Color::Names::Cloford" : "lib/Color/Names/Cloford.pm",
+        "Color::Names::HTML"    : "lib/Color/Names/HTML.pm",
+    },
+    "source-url" : "git://github.com/Xliff/p6-color-names.git"
+}
