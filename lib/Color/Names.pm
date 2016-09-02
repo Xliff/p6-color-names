@@ -17,9 +17,10 @@ sub EXPORT(+@a) {
 
 	# # cw: What we always export.
 	{
-	  	'&color' 	=> '&Color::Names::color',
-	  	'&hex'		=> '&Color::Names::hex',
-	  	'&rgb'		=> '&Color::Names::rgb'
+		'&lists'	=> ::('&Color::Names::lists'),
+	  	'&color' 	=> ::('&Color::Names::color'),
+	  	'&hex'		=> ::('&Color::Names::hex'),
+	  	'&rgb'		=> ::('&Color::Names::rgb'),
 	}
 }
 
@@ -53,6 +54,10 @@ INIT {
 }
 
 module Color::Names {
+
+	our sub lists {
+		( @color_lists_found.flat );
+	}
 
 	our sub color(Str $n, :$obj) {
 		my $retVal;
