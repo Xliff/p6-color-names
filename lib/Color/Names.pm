@@ -4,7 +4,7 @@ my @color_lists_found;
 my @color_list;
 my $color-support;
 
-multi sub EXPORT(*@a) {
+sub EXPORT(+@a) {
 	# cw: Implement SELECTIVE loading if necessary.
 	@color_list = @a.elems > 0 ?? 
 		@color_lists_found.grep(@a.any)
@@ -15,11 +15,11 @@ multi sub EXPORT(*@a) {
 		require ::("Color::Names::{$cl}");
 	}
 
-	# cw: What we always export.
+	# # cw: What we always export.
 	{
-	 	'&color' 	=> &Color::Names::color,
-	 	'&hex'		=> &Color::Names::hex,
-	 	'&rgb'		=> &Color::Names::rgb
+	  	'&color' 	=> '&Color::Names::color',
+	  	'&hex'		=> '&Color::Names::hex',
+	  	'&rgb'		=> '&Color::Names::rgb'
 	}
 }
 
@@ -52,75 +52,77 @@ INIT {
 	}
 }
 
-unit module Color::Names;
+module Color::Names {
 
-our sub color(Str $n, :$obj) is export {
-	my $retVal;
+	our sub color(Str $n, :$obj) {
+		my $retVal;
 
-	for (@color_list) -> $cl {
-		my $c;
-		$c = ::("Color::Names::{$cl}::%Colors"){$n}
-			if ::("Color::Names::{$cl}::%Colors"){$n}:exists;
+		for (@color_list) -> $cl {
+			my $c;
+			$c = ::("Color::Names::{$cl}::%Colors"){$n}
+				if ::("Color::Names::{$cl}::%Colors"){$n}:exists;
 
-		if $c.defined {
-			$retVal.push: $cl => $obj.defined ??
-				::("Color").new(:hex($c<hex>))
-				!!
-				$c
-		}
-	}
-
-	# cw: Simplify return value if only one match.
-	$retVal.defined ??
-		($retVal.elems == 1 ?? $retVal[0].value !! $retVal)
-		!!
-		Nil;
-}
-
-our sub hex(Str $n) is export {
-	given color($n) {
-		when Hash {
-			$_<hex>;
+			if $c.defined {
+				$retVal.push: $cl => $obj.defined ??
+					::("Color").new(:hex($c<hex>))
+					!!
+					$c
+			}
 		}
 
-		when Array {
-			$_.map: { $_.value<hex> }
-		}
-
-		default {
+		# cw: Simplify return value if only one match.
+		$retVal.defined ??
+			($retVal.elems == 1 ?? $retVal[0].value !! $retVal)
+			!!
 			Nil;
+	}
+
+	our sub hex(Str $n) {
+		given color($n) {
+			when Hash {
+				$_<hex>;
+			}
+
+			when Array {
+				$_.map: { $_.value<hex> }
+			}
+
+			default {
+				Nil;
+			}
 		}
 	}
-}
 
-our sub rgb(Str $n, :$hash) is export {
-	given color($n) {
-		when Hash {
-			$hash.defined ??
-				(
-					red   => $_<red>, 
-					green => $_<green>, 
-					blue  => $_<blue> 
-				)
-				!!
-				( $_<red>, $_<green>, $_<blue>);
-		}
-
-		when Array {
-			$_.map: { 
+	our sub rgb(Str $n, :$hash) {
+		given color($n) {
+			when Hash {
 				$hash.defined ??
-				{
-					red   => $_.value<red>, 
-					green => $_.value<green>, 
-					blue  => $_.value<blue> 
-				}
-				!!
-				[ $_.value<red>, $_.value<gree>, $_.value<blue> ] 
-			};
-		}
+					(
+						red   => $_<red>, 
+						green => $_<green>, 
+						blue  => $_<blue> 
+					)
+					!!
+					( $_<red>, $_<green>, $_<blue>);
+			}
 
-		default {
-			Nil;
+			when Array {
+				$_.map: { 
+					$hash.defined ??
+					{
+						red   => $_.value<red>, 
+						green => $_.value<green>, 
+						blue  => $_.value<blue> 
+					}
+					!!
+					[ $_.value<red>, $_.value<gree>, $_.value<blue> ] 
+				};
+			}
+
+			default {
+				Nil;
+			}
 		}
 	}
+
 }
