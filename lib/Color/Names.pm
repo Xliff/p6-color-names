@@ -3,6 +3,7 @@ use v6.c;
 my @color_lists_found;
 my @color_list;
 my $color-support;
+my $color_location;
 
 sub EXPORT(+@a) {
 	# cw: Implement SELECTIVE loading if necessary.
@@ -15,28 +16,35 @@ sub EXPORT(+@a) {
 		require ::("Color::Names::{$cl}");
 	}
 
-	# # cw: What we always export.
+	# cw: What we always export.
+	#
+	#     Is there any way to get EXPORT::DEFAULT from the module block?
 	{
 		'&lists'	=> ::('&Color::Names::lists'),
+		'&location' => ::('&Color::Names::location'),
 	  	'&color' 	=> ::('&Color::Names::color'),
 	  	'&hex'		=> ::('&Color::Names::hex'),
 	  	'&rgb'		=> ::('&Color::Names::rgb'),
 	}
 }
 
-# cw: $*REPO.repo-chain list of CompUnit::Repository::Installation objects
-#     that contain path info.
 BEGIN {
+	# cw: Check for existence of Color class.
 	$color-support = (try require ::("Color")) !~~ Nil;
 
+	# cw: $*REPO.repo-chain list of CompUnit::Repository::Installation 
+	#	  objects that contain path info.
+	#	  So now we can check what color lists exist, but first we need
+	#     to find where they are stored.
 	for @($*REPO.repo-chain).grep({
 		$_ ~~ CompUnit::Repository::FileSystem
 		||
 		$_ ~~ CompUnit::Repository::Installation
 	}) -> $c {
 		my $p = $c.path-spec.subst(/^ .+ '#'/, '');
-		if "{$p}/Color/Names".IO.d {
-			for dir("{$p}/Color/Names") -> $f { 
+		$color_location = "{$p}/Color/Names";
+		if $color_location.IO.d {
+			for dir($color_location) -> $f { 
 				my $b = $f.basename;
 				$b ~~ s/ '.' pm6?//;
 				push @color_lists_found: $b;
@@ -57,6 +65,10 @@ module Color::Names {
 
 	our sub lists {
 		( @color_lists_found.flat );
+	}
+
+	our sub location {
+		$color_location;
 	}
 
 	our sub color(Str $n, :$obj) {
