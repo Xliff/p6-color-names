@@ -1,9 +1,37 @@
 use v6.c;
 
-my @color_lists_found;
-my @color_list;
-my $color-support;
-my $color_location;
+our @color_lists_found = ();
+our @color_list = ();
+our $color_support;
+our $color_location;
+
+# cw: Execute every time this is used! BEGIN blocks are compile-time ONLY.
+{
+	# cw: Check for existence of Color class.
+	$color_support = (try require ::('Color')) !~~ Nil;
+
+ 	# cw: $*REPO.repo-chain list of CompUnit::Repository::Installation 
+ 	#	  objects that contain path info.
+ 	#	  So now we can check what color lists exist, but first we need
+ 	#     to find where they are stored.
+ 	for @($*REPO.repo-chain).grep({
+ 		$_ ~~ CompUnit::Repository::FileSystem
+ 		||
+ 		$_ ~~ CompUnit::Repository::Installation
+ 	}) -> $c {
+ 		my $p = $c.path-spec.subst(/^ .+ '#'/, '');
+ 		$color_location = "{$p}/Color/Names";
+ 		if $color_location.IO.d {
+ 			for dir($color_location) -> $f {
+ 				my $b = $f.basename;
+ 				$b ~~ s/ '.' pm6?//;
+ 				push @color_lists_found: $b;
+ 			}
+
+ 			last;
+ 		}
+ 	}
+}
 
 sub EXPORT(+@a) {
 	# cw: Implement SELECTIVE loading if necessary.
@@ -12,59 +40,38 @@ sub EXPORT(+@a) {
 		!!
 		@color_lists_found;
 
-	for @color_list -> $cl {
-		require ::("Color::Names::{$cl}");
-	}
-
 	# cw: What we always export.
 	#
 	#     Is there any way to get EXPORT::DEFAULT from the module block?
 	{
-		'&lists'	=> ::('&Color::Names::lists'),
-		'&location' => ::('&Color::Names::location'),
-	  	'&color' 	=> ::('&Color::Names::color'),
-	  	'&hex'		=> ::('&Color::Names::hex'),
-	  	'&rgb'		=> ::('&Color::Names::rgb'),
+		'&lists_available'	=> ::('&Color::Names::lists_available'),
+		'&lists_loaded'		=> ::('&Color::Names::lists_loaded'),
+		'&location'			=> ::('&Color::Names::location'),
+	  	'&color' 			=> ::('&Color::Names::color'),
+	  	'&hex'				=> ::('&Color::Names::hex'),
+	  	'&rgb'				=> ::('&Color::Names::rgb'),
 	}
 }
 
-BEGIN {
-	# cw: Check for existence of Color class.
-	$color-support = (try require ::("Color")) !~~ Nil;
-
-	# cw: $*REPO.repo-chain list of CompUnit::Repository::Installation 
-	#	  objects that contain path info.
-	#	  So now we can check what color lists exist, but first we need
-	#     to find where they are stored.
-	for @($*REPO.repo-chain).grep({
-		$_ ~~ CompUnit::Repository::FileSystem
-		||
-		$_ ~~ CompUnit::Repository::Installation
-	}) -> $c {
-		my $p = $c.path-spec.subst(/^ .+ '#'/, '');
-		$color_location = "{$p}/Color/Names";
-		if $color_location.IO.d {
-			for dir($color_location) -> $f { 
-				my $b = $f.basename;
-				$b ~~ s/ '.' pm6?//;
-				push @color_lists_found: $b;
-			}
-
-			last;
-		}
-	}
-}
 
 INIT { 
-	if $color-support {
-		require Color;
+		if $color_support {
+				require Color;
+			}
+			for @color_list -> $cl {
+				say "L: $cl";
+				require ::("Color::Names::{$cl}");
+			}
 	}
-}
 
 module Color::Names {
 
-	our sub lists {
+	our sub lists_available {
 		( @color_lists_found.flat );
+	}
+
+	our sub lists_loaded {
+		( @color_list.flat )
 	}
 
 	our sub location {
@@ -76,12 +83,12 @@ module Color::Names {
 
 		for (@color_list) -> $cl {
 			my $c;
-			$c = ::("Color::Names::{$cl}::%Colors"){$n}
-				if ::("Color::Names::{$cl}::%Colors"){$n}:exists;
+			$c = ::("\%Color::Names::{$cl}::Colors"){$n}
+				if ::("\%Color::Names::{$cl}::Colors"){$n}:exists;
 
 			if $c.defined {
 				$retVal.push: $cl => $obj.defined ??
-					::("Color").new(:hex($c<hex>))
+					::('Color').new(:hex($c<hex>))
 					!!
 					$c
 			}
