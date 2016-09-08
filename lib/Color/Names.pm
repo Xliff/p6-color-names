@@ -5,6 +5,11 @@ our @color_list = ();
 our $color_support;
 our $color_location;
 
+# cw: Really want to run pre EXPORT!
+INIT { 
+	
+}
+
 # cw: Execute every time this is used! BEGIN blocks are compile-time ONLY.
 {
 	# cw: Check for existence of Color class.
@@ -40,6 +45,14 @@ sub EXPORT(+@a) {
 		!!
 		@color_lists_found;
 
+	if $color_support {
+		require Color;
+	}
+	for @color_list -> $cl {
+		say "L: $cl";
+		require ::("Color::Names::{$cl}");
+	}
+
 	# cw: What we always export.
 	#
 	#     Is there any way to get EXPORT::DEFAULT from the module block?
@@ -52,17 +65,6 @@ sub EXPORT(+@a) {
 	  	'&rgb'				=> ::('&Color::Names::rgb'),
 	}
 }
-
-
-INIT { 
-		if $color_support {
-				require Color;
-			}
-			for @color_list -> $cl {
-				say "L: $cl";
-				require ::("Color::Names::{$cl}");
-			}
-	}
 
 module Color::Names {
 
