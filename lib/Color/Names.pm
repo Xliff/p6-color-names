@@ -1,7 +1,7 @@
 use v6.c;
 
-our @color_lists_found = ();
-our @color_list = ();
+our @color_list = <Cloford Crayola HTML X11 Pantone>;
+our @color_lists_found = @color_list;
 our $color_support;
 our $color_location;
 
@@ -15,43 +15,50 @@ INIT {
 	# cw: Check for existence of Color class.
 	$color_support = (try require ::('Color')) !~~ Nil;
 
+
+	# cw: Works fine when not installed, but when installed module names get 
+	#     converted to files with an SHA1 name. Therefore selective loading
+	#     via this method is not possible in Perl6. Would need to do something
+	#	  else, maybe with META.info!?!
+	#
+	#
  	# cw: $*REPO.repo-chain list of CompUnit::Repository::Installation 
  	#	  objects that contain path info.
  	#	  So now we can check what color lists exist, but first we need
  	#     to find where they are stored.
- 	for @($*REPO.repo-chain).grep({
- 		$_ ~~ CompUnit::Repository::FileSystem
- 		||
- 		$_ ~~ CompUnit::Repository::Installation
- 	}) -> $c {
- 		my $p = $c.path-spec.subst(/^ .+ '#'/, '');
- 		$color_location = "{$p}/Color/Names";
- 		if $color_location.IO.d {
- 			for dir($color_location) -> $f {
- 				my $b = $f.basename;
- 				$b ~~ s/ '.' pm6?//;
- 				push @color_lists_found: $b;
- 			}
-
- 			last;
- 		}
- 	}
+ 	#for @($*REPO.repo-chain).grep({
+ 	#	$_ ~~ CompUnit::Repository::FileSystem
+ 	#	||
+ 	#	$_ ~~ CompUnit::Repository::Installation
+ 	#}) -> $c {
+ 	#	my $p = $c.path-spec.subst(/^ .+ '#'/, '');
+ 	#	$color_location = "{$p}/Color/Names";
+ 	#	if $color_location.IO.d {
+ 	#		for dir($color_location) -> $f {
+ 	#			my $b = $f.basename;
+ 	#			$b ~~ s/ '.' pm6?//;
+ 	#			push @color_lists_found: $b;
+ 	#		}
+ 	#
+	#		last;
+ 	#	}
+ 	#}
 }
 
 sub EXPORT(+@a) {
 	# cw: Implement SELECTIVE loading if necessary.
-	@color_list = @a.elems > 0 ?? 
-		@color_lists_found.grep(@a.any)
-		!!
-		@color_lists_found;
+	#@color_list = @a.elems > 0 ?? 
+	#	@color_lists_found.grep(@a.any)
+	#	!!
+	#	@color_lists_found;
 
 	if $color_support {
-		require Color;
+		require Test;
 	}
-	for @color_list -> $cl {
-		say "L: $cl";
-		require ::("Color::Names::{$cl}");
-	}
+	#for @color_list -> $cl {
+	#	say "L: $cl";
+	#	require ::("Color::Names::{$cl}");
+	#}
 
 	# cw: What we always export.
 	#

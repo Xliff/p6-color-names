@@ -199,3 +199,7 @@ our %Colors = (
 	'Sonic Silver'		=> { hex => '#757575', red => 117, green => 117, blue => 117 },
 	'Steel Blue'		=> { hex => '#0081ab', red =>   0, green => 129, blue => 171 }
 );
+
+my method merge-symbols {
+
+}
