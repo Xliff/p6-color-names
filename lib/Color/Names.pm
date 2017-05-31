@@ -1,20 +1,22 @@
 use v6.c;
 
-our @color_list = <Cloford Crayola HTML X11 Pantone>;
-our @color_lists_found = @color_list;
 our $color_support;
 our $color_location;
-
-# cw: Really want to run pre EXPORT!
-INIT { 
-	
-}
+our @color_list = <Cloford Crayola HTML X11 Pantone>;
+our @color_lists_found = @color_list;
 
 # cw: Execute every time this is used! BEGIN blocks are compile-time ONLY.
 {
 	# cw: Check for existence of Color class.
 	$color_support = (try require ::('Color')) !~~ Nil;
+	if $color_support {
+		require Color;
+	}
 
+	#for @color_list -> $cl {
+	#	say "L: $cl";
+	#	require ::("Color::Names::{$cl}");
+	#}
 
 	# cw: Works fine when not installed, but when installed module names get 
 	#     converted to files with an SHA1 name. Therefore selective loading
@@ -45,49 +47,66 @@ INIT {
  	#}
 }
 
-sub EXPORT(+@a) {
+#sub EXPORT(+@a) {
 	# cw: Implement SELECTIVE loading if necessary.
-	#@color_list = @a.elems > 0 ?? 
-	#	@color_lists_found.grep(@a.any)
-	#	!!
-	#	@color_lists_found;
+#	@color_list = @a.elems > 0 ?? 
+#		@color_lists_found.grep(@a.any)
+#		!!
+#		@color_lists_found;
 
-	if $color_support {
-		require Test;
-	}
-	#for @color_list -> $cl {
+#	for @color_list -> $cl {
 	#	say "L: $cl";
-	#	require ::("Color::Names::{$cl}");
-	#}
+#		require ::("Color::Names::{$cl}");
+		#
+		# Stick dynamic color lists in an object!!!
+		# Better yet, convert this to a class which takes the lists as a parameter to new!
+#	}
 
 	# cw: What we always export.
 	#
 	#     Is there any way to get EXPORT::DEFAULT from the module block?
-	{
-		'&lists_available'	=> ::('&Color::Names::lists_available'),
-		'&lists_loaded'		=> ::('&Color::Names::lists_loaded'),
-		'&location'			=> ::('&Color::Names::location'),
-	  	'&color' 			=> ::('&Color::Names::color'),
-	  	'&hex'				=> ::('&Color::Names::hex'),
-	  	'&rgb'				=> ::('&Color::Names::rgb'),
+	#{
+	#	'&lists_available'	=> ::('&Color::Names::lists_available'),
+	#	'&lists_loaded'		=> ::('&Color::Names::lists_loaded'),
+	#	'&location'		=> ::('&Color::Names::location'),
+	#  	'&color' 		=> ::('&Color::Names::color'),
+	#  	'&hex'			=> ::('&Color::Names::hex'),
+	#  	'&rgb'			=> ::('&Color::Names::rgb'),
+#}
+#}
+
+class Color::Names {
+	has %!lists;
+	has Boolean $!use_color_obj;
+
+	method always_use_obj {
+		$!use_color_obj = True;
+		self;
 	}
-}
 
-module Color::Names {
+	method never_use_obj {
+		$!use_color_obj = False;
+		self;
+	}
 
-	our sub lists_available {
+	method lists_available {
 		( @color_lists_found.flat );
 	}
 
-	our sub lists_loaded {
+	method lists_loaded {
 		( @color_list.flat )
 	}
 
-	our sub location {
-		$color_location;
-	}
+	# cw: There really is no reason for this, now.
+	#
+	#method location {
+	#	$color_location;
+	#}
 
-	our sub color(Str $n, :$obj) {
+	# The rest of these should be moved to a Role.
+
+	# cw: Now return list of matching colors in pairs: Color, Catalog
+	method color(Str $n, :$obj) {
 		my $retVal;
 
 		for (@color_list) -> $cl {
@@ -96,10 +115,11 @@ module Color::Names {
 				if ::("\%Color::Names::{$cl}::Colors"){$n}:exists;
 
 			if $c.defined {
-				$retVal.push: $cl => $obj.defined ??
+				my $mc - $cl => $!use_color_obj || $obj.defined ??
 					::('Color').new(:hex($c<hex>))
 					!!
-					$c
+					$c;
+				$retVal.push: [ $mc, $cl ];
 			}
 		}
 
@@ -110,7 +130,7 @@ module Color::Names {
 			Nil;
 	}
 
-	our sub hex(Str $n) {
+	method hex(Str $n) {
 		given color($n) {
 			when Hash {
 				$_<hex>;
@@ -126,7 +146,7 @@ module Color::Names {
 		}
 	}
 
-	our sub rgb(Str $n, :$hash) {
+	method rgb(Str $n, :$hash) {
 		given color($n) {
 			when Hash {
 				$hash.defined ??
