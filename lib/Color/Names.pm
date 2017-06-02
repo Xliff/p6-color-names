@@ -18,13 +18,13 @@ our @color_lists_found = @color_list;
 	#	require ::("Color::Names::{$cl}");
 	#}
 
-	# cw: Works fine when not installed, but when installed module names get 
+	# cw: Works fine when not installed, but when installed module names get
 	#     converted to files with an SHA1 name. Therefore selective loading
 	#     via this method is not possible in Perl6. Would need to do something
 	#	  else, maybe with META.info!?!
 	#
 	#
- 	# cw: $*REPO.repo-chain list of CompUnit::Repository::Installation 
+ 	# cw: $*REPO.repo-chain list of CompUnit::Repository::Installation
  	#	  objects that contain path info.
  	#	  So now we can check what color lists exist, but first we need
  	#     to find where they are stored.
@@ -49,7 +49,7 @@ our @color_lists_found = @color_list;
 
 #sub EXPORT(+@a) {
 	# cw: Implement SELECTIVE loading if necessary.
-#	@color_list = @a.elems > 0 ?? 
+#	@color_list = @a.elems > 0 ??
 #		@color_lists_found.grep(@a.any)
 #		!!
 #		@color_lists_found;
@@ -76,8 +76,16 @@ our @color_lists_found = @color_list;
 #}
 
 class Color::Names {
+
+	my class Color::Names::Lookup {
+		method FALLBACK($name, |c) {
+			if
+		}
+	}
+
 	has %!lists;
 	has Boolean $!use_color_obj;
+	has Lookup $.lookup
 
 	method always_use_obj {
 		$!use_color_obj = True;
@@ -111,8 +119,16 @@ class Color::Names {
 
 		for (@color_list) -> $cl {
 			my $c;
-			$c = ::("\%Color::Names::{$cl}::Colors"){$n}
-				if ::("\%Color::Names::{$cl}::Colors"){$n}:exists;
+			# TODO -- cw: Consider trying to cache data using the bind operator,
+			#         then checking that structure, FIRST. Note, key would need
+			#         to include both color name and catalog.
+			$c = do {
+				(try require ::("Color::Names::{$cl}") === Nil and return;
+				::("\%Color::Names::{$cl}::Colors"){$n};
+			}
+
+			# TODO == cw: If Color object is requested, check if $color_support
+			#             is defined. If not, then throw the proper exception.
 
 			if $c.defined {
 				my $mc - $cl => $!use_color_obj || $obj.defined ??
@@ -151,24 +167,24 @@ class Color::Names {
 			when Hash {
 				$hash.defined ??
 					(
-						red   => $_<red>, 
-						green => $_<green>, 
-						blue  => $_<blue> 
+						red   => $_<red>,
+						green => $_<green>,
+						blue  => $_<blue>
 					)
 					!!
 					( $_<red>, $_<green>, $_<blue>);
 			}
 
 			when Array {
-				$_.map: { 
+				$_.map: {
 					$hash.defined ??
 					{
-						red   => $_.value<red>, 
-						green => $_.value<green>, 
-						blue  => $_.value<blue> 
+						red   => $_.value<red>,
+						green => $_.value<green>,
+						blue  => $_.value<blue>
 					}
 					!!
-					[ $_.value<red>, $_.value<gree>, $_.value<blue> ] 
+					[ $_.value<red>, $_.value<gree>, $_.value<blue> ]
 				};
 			}
 
