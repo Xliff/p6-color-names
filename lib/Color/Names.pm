@@ -77,15 +77,25 @@ our @color_lists_found = @color_list;
 
 class Color::Names {
 
-	my class Color::Names::Lookup {
-		method FALLBACK($name, |c) {
-			if
-		}
-	}
-
-	has %!lists;
+	has @!catalogs;
 	has Boolean $!use_color_obj;
 	has Lookup $.lookup
+
+	# cw: Maybe add Color::Names::Color so that Lookup can use that object and
+	#     the helper methods hex() and rgb() can be added to a Role?
+
+	my class Color::Names::Lookup {
+		method noColor {
+			Nil;
+		}
+
+		method FALLBACK($name, |c) {
+			my $c = color(c[0], :obj($!use_color_obj));
+			# cw: I suspect this will not do what I want in the case of &noColor
+			self.^add_method(c[0], $c.defined ?? method { $c; } !! &noColor);
+			self.^compose;
+    }
+	}
 
 	method always_use_obj {
 		$!use_color_obj = True;
