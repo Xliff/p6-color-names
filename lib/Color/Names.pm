@@ -78,6 +78,7 @@ class Color::Names {
 
 	has %!catalogs;
 	has Boolean $!use_color_obj;
+	has Boolean $!use_exeptions;
 	has Lookup $.lookup
 
 	# cw: Maybe add Color::Names::Color so that Lookup can use that object and
@@ -105,7 +106,8 @@ class Color::Names {
 		:$obj,
 		:$exceptions
 	) {
-		$!use_color_obj = $obj if $obj.defined;
+		$!use_color_obj =  $obj.defined ?? $obj !! False;
+		$!use_exceptions = $exeptions.defined ?? $exceptions !! False;
 		$.lookup = Color::Names::Lookup.new;
 
 		for (@catalogs) -> $c {
@@ -113,7 +115,7 @@ class Color::Names {
 				# cw: TODO - Throw the proper exception if catalog does not exist, if
 				#            exception handling has been requested. Otherwise silently
 				#					   fail with proper message.
-				say "Color catalog '$cl' does not exist";				
+				say "Color catalog '$c' does not exist";
 				next;
 			}
 			# cw: Bind instead of assign to optimize memory usage.
@@ -138,6 +140,21 @@ class Color::Names {
 
 	method lists_loaded {
 		( @!catalogs.flat )
+	}
+
+	method load_catalog(Str $n) {
+		if $n == any(%!catalogs.keys) {
+			# cW: For now, we do not worry about packages altered or created during run time.
+			#     This is something that can be worked into the next version.
+			#
+			# cw: Again, throw the proper exception if exception handling is requested.
+			#     Otherwise fail with the appropriate method.
+			if $!exceptions {
+			} else {
+				say "Catalog '$n' already loaded!";
+				return;
+			}
+		}
 	}
 
 	# cw: There really is no reason for this, now.
