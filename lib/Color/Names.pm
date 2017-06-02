@@ -109,20 +109,8 @@ class Color::Names {
 		$!use_color_obj =  $obj.defined ?? $obj !! False;
 		$!use_exceptions = $exeptions.defined ?? $exceptions !! False;
 		$.lookup = Color::Names::Lookup.new;
-
-		for (@catalogs) -> $c {
-			(try require ::("Color::Names::{$c}") === Nil and {
-				# cw: TODO - Throw the proper exception if catalog does not exist, if
-				#            exception handling has been requested. Otherwise silently
-				#					   fail with proper message.
-				say "Color catalog '$c' does not exist";
-				next;
-			}
-			# cw: Bind instead of assign to optimize memory usage.
-			%!catalogs{$c} := ::("\%Color::Names::{$c}::Colors");
-		}
+		load_catalogs(@catalogs);
 	}
-
 
 	method always_use_obj {
 		$!use_color_obj = True;
@@ -139,21 +127,44 @@ class Color::Names {
 	}
 
 	method lists_loaded {
-		( @!catalogs.flat )
+		( %!catalogs.keys.flat )
 	}
 
-	method load_catalog(Str $n) {
-		if $n == any(%!catalogs.keys) {
-			# cW: For now, we do not worry about packages altered or created during run time.
-			#     This is something that can be worked into the next version.
-			#
-			# cw: Again, throw the proper exception if exception handling is requested.
-			#     Otherwise fail with the appropriate method.
+	method load_catalogs(@Pcats) {
+		# cw: Stop problematic duplicates from the get-go.
+		my @cats = @Pcats.unique;
+
+		unless (all(@cats) ~~ Str) {
 			if $!exceptions {
 			} else {
-				say "Catalog '$n' already loaded!";
+				warn "Illegal parameter found in call to load_catalog\n";
 				return;
 			}
+		}
+		for (@cats) -> $nc {
+			next unless $nc ~~ Str;
+			if $nc == any(%!catalogs.keys) {
+				# cW: For now, we do not worry about packages altered or created during run time.
+				#     This is something that can be worked into the next version.
+				#
+				# cw: Again, throw the proper exception if exception handling is requested.
+				#     Otherwise fail with the appropriate method.
+				if $!exceptions {
+				} else {
+					say "Catalog '$n' already loaded!";
+					next;
+				}
+			}
+			# cw: Load catalog.
+			(try require ::("Color::Names::{$nc}") === Nil and {
+				# cw: TODO - Throw the proper exception if catalog does not exist, if
+				#            exception handling has been requested. Otherwise silently
+				#					   fail with proper message.
+				say "Color catalog '$nc' does not exist";
+				next;
+			}
+			# cw: Bind instead of assign to optimize memory usage.
+			%!catalogs{$nc} := ::("\%Color::Names::{$nc}::Colors");
 		}
 	}
 
