@@ -1,8 +1,7 @@
 use v6.c;
 
 our $color_support;
-our $color_location;
-our @color_list = <Cloford Crayola HTML X11 Pantone>;
+#our $color_location;
 our @color_lists_found = @color_list;
 
 # cw: Execute every time this is used! BEGIN blocks are compile-time ONLY.
@@ -77,7 +76,7 @@ our @color_lists_found = @color_list;
 
 class Color::Names {
 
-	has @!catalogs;
+	has %!catalogs;
 	has Boolean $!use_color_obj;
 	has Lookup $.lookup
 
@@ -97,6 +96,32 @@ class Color::Names {
     }
 	}
 
+	method new(@catalogs, :$obj) {
+		self.bless(:@catalogs, :$obj, :$exceptions);
+	}
+
+	submethod BUILD (
+		:@catalogs,
+		:$obj,
+		:$exceptions
+	) {
+		$!use_color_obj = $obj if $obj.defined;
+		$.lookup = Color::Names::Lookup.new;
+
+		for (@catalogs) -> $c {
+			(try require ::("Color::Names::{$c}") === Nil and {
+				# cw: TODO - Throw the proper exception if catalog does not exist, if
+				#            exception handling has been requested. Otherwise silently
+				#					   fail with proper message.
+				say "Color catalog '$cl' does not exist";				
+				next;
+			}
+			# cw: Bind instead of assign to optimize memory usage.
+			%!catalogs{$c} := ::("\%Color::Names::{$c}::Colors");
+		}
+	}
+
+
 	method always_use_obj {
 		$!use_color_obj = True;
 		self;
@@ -112,7 +137,7 @@ class Color::Names {
 	}
 
 	method lists_loaded {
-		( @color_list.flat )
+		( @!catalogs.flat )
 	}
 
 	# cw: There really is no reason for this, now.
@@ -133,13 +158,16 @@ class Color::Names {
 			#         then checking that structure, FIRST. Note, key would need
 			#         to include both color name and catalog.
 			$c = do {
-				(try require ::("Color::Names::{$cl}") === Nil and return;
-				::("\%Color::Names::{$cl}::Colors"){$n};
+				%!catalogs{$cl}.defined && %!catalogs{$cl}{$n}.defined
+					??
+					%!catalogs{$cl}{$n}
+					!!
+					Nil
 			}
 
 			# TODO == cw: If Color object is requested, check if $color_support
 			#             is defined. If not, then throw the proper exception.
-
+			#
 			if $c.defined {
 				my $mc - $cl => $!use_color_obj || $obj.defined ??
 					::('Color').new(:hex($c<hex>))
@@ -158,6 +186,9 @@ class Color::Names {
 
 	method hex(Str $n) {
 		given color($n) {
+			# cw: Handle Color object, too.
+			#
+			#
 			when Hash {
 				$_<hex>;
 			}
@@ -174,6 +205,9 @@ class Color::Names {
 
 	method rgb(Str $n, :$hash) {
 		given color($n) {
+			# cw: Handle Color object, too.
+			#
+			#
 			when Hash {
 				$hash.defined ??
 					(
@@ -182,7 +216,7 @@ class Color::Names {
 						blue  => $_<blue>
 					)
 					!!
-					( $_<red>, $_<green>, $_<blue>);
+					( $_<red>, $_<green>, $_<blue> );
 			}
 
 			when Array {
