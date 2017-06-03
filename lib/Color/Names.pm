@@ -86,13 +86,15 @@ class Color::Names {
 
 	my class Color::Names::Lookup {
 
-		method FALLBACK($name, |c) {
-			# cw: I suspect this will not do what I want in the case of &noColor
-			self.^add_method($name, method {
-				$color($name, :obj($!use_color_obj));
-			} );
+		method FALLBACK($name, |C) {
+			my $new_meth = method (:$obj) {
+				$color($name, :$obj);
+			}
+			self.^add_method($name, $new_meth);
 			self.^compose;
+			$new_meth(:obj( C<obj> ));
     }
+
 	}
 
 	method new(@catalogs, :$obj) {
@@ -199,7 +201,7 @@ class Color::Names {
 			#
 			if $c.defined {
 				my $mc;
-				if $!use_color_obj !! $obj.defined {
+				if $obj // $!use_color_obj {
 					$mc = ::('Color').new(:hex($c<hex>))
 				} else {
 					$mc := $c;
