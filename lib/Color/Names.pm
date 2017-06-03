@@ -85,14 +85,12 @@ class Color::Names {
 	#     the helper methods hex() and rgb() can be added to a Role?
 
 	my class Color::Names::Lookup {
-		method noColor {
-			Nil;
-		}
 
 		method FALLBACK($name, |c) {
-			my $c = color(c[0], :obj($!use_color_obj));
 			# cw: I suspect this will not do what I want in the case of &noColor
-			self.^add_method(c[0], $c.defined ?? method { $c; } !! &noColor);
+			self.^add_method($name, method {
+				$color($name, :obj($!use_color_obj));
+			} );
 			self.^compose;
     }
 	}
@@ -122,9 +120,9 @@ class Color::Names {
 		self;
 	}
 
-	method lists_available {
-		( @color_lists_found.flat );
-	}
+	#method lists_available {
+	#	( @color_lists_found.flat );
+	#}
 
 	method lists_loaded {
 		( %!catalogs.keys.flat )
@@ -166,6 +164,9 @@ class Color::Names {
 			# cw: Bind instead of assign to optimize memory usage.
 			%!catalogs{$nc} := ::("\%Color::Names::{$nc}::Colors");
 		}
+
+		# TODO -- cw: Once a new catalog is loaded, all of the methods in Lookup that
+		#         match Lookups.noColor should be removed.
 	}
 
 	# cw: There really is no reason for this, now.
@@ -185,7 +186,7 @@ class Color::Names {
 			# TODO -- cw: Consider trying to cache data using the bind operator,
 			#         then checking that structure, FIRST. Note, key would need
 			#         to include both color name and catalog.
-			$c = do {
+			$c := do {
 				%!catalogs{$cl}.defined && %!catalogs{$cl}{$n}.defined
 					??
 					%!catalogs{$cl}{$n}
@@ -197,17 +198,19 @@ class Color::Names {
 			#             is defined. If not, then throw the proper exception.
 			#
 			if $c.defined {
-				my $mc - $cl => $!use_color_obj || $obj.defined ??
-					::('Color').new(:hex($c<hex>))
-					!!
-					$c;
+				my $mc;
+				if $!use_color_obj !! $obj.defined {
+					$mc = ::('Color').new(:hex($c<hex>))
+				} else {
+					$mc := $c;
+				}
 				$retVal.push: [ $mc, $cl ];
 			}
 		}
 
 		# cw: Simplify return value if only one match.
 		$retVal.defined ??
-			($retVal.elems == 1 ?? $retVal[0].value !! $retVal)
+			($retVal.elems == 1 ?? $retVal[0] !! $retVal)
 			!!
 			Nil;
 	}
