@@ -44,6 +44,16 @@ our @color_lists_found = @color_list;
 	#		last;
  	#	}
  	#}
+
+	# cw: For posterity, if I ever get this done:
+	#
+	#<nine> m: say $*REPO.repo-chain.grep(CompUnit::Repository::Installable)>>.installed
+	#<camelia> rakudo-moar 52d395: OUTPUT: «(Nil (CompUnit::Repository::Installation::InstalledDistribution.new(prefix => IO::Path.new("/home/camelia/rakudo-m-inst-2/share/perl6/site", :SPEC(IO::Spec::Unix), :CWD("/home/camelia")))) () (CompUnit::Repository::Installation::InstalledDistribution.new…»
+	#<nine> Xliff: that's your starting point ^^^
+	#<nine> Xliff: you can just look at the file system for CompUnit::Repository::FileSystem. #That's what they are for after all.
+	#
+	# # cw: nine++
+
 }
 
 #sub EXPORT(+@a) {
