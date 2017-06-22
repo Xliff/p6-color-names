@@ -54,6 +54,31 @@ our @color_lists_found = @color_list;
 	#
 	# # cw: nine++
 
+	# cw: So based on that, we have the following:
+
+	for $*REPO.repo-chain {
+		given {
+			when Comp::Repository::Installable {
+				for $_.installed -> $i {
+					for $i.meta<provides>.keys -> $p {
+						if $p ~~ /^ 'Color::Names::' (.+?)/ {
+							@color_lists_found.push $/[1];
+						}
+					}
+				}
+			}
+
+			when Comp::Repository::FileSystem {
+				my $newpath = $_.prefix.add("Color/Names");
+				if $newpath.e {
+					for $newpath.dir(test ⇒ / '.' pm6?/) -> $f {
+						$f ~~ s/ '.' pm6? //;
+						@color_lists_found.push: $f;
+					}
+				}
+			}
+		}
+	}
 }
 
 #sub EXPORT(+@a) {
@@ -132,15 +157,15 @@ class Color::Names {
 		self;
 	}
 
-	#method lists_available {
-	#	( @color_lists_found.flat );
-	#}
+	method lists_available {
+		( @color_lists_found.flat );
+	}
 
 	method lists_loaded {
 		( %!catalogs.keys.flat )
 	}
 
-	method load_catalogs(@Pcats) {
+	method load_list(@Pcats) {
 		# cw: Stop problematic duplicates from the get-go.
 		my @cats = @Pcats.unique;
 
@@ -170,7 +195,7 @@ class Color::Names {
 				# cw: TODO - Throw the proper exception if catalog does not exist, if
 				#            exception handling has been requested. Otherwise silently
 				#					   fail with proper message.
-				say "Color catalog '$nc' does not exist";
+				say "Color list '$nc' does not exist";
 				next;
 			}
 			# cw: Bind instead of assign to optimize memory usage.
