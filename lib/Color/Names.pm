@@ -1,8 +1,7 @@
 use v6.c;
 
 our $color_support;
-#our $color_location;
-our @color_lists_found = @color_list;
+our @color_lists_found;
 
 # cw: Execute every time this is used! BEGIN blocks are compile-time ONLY.
 {
@@ -57,24 +56,22 @@ our @color_lists_found = @color_list;
 	# cw: So based on that, we have the following:
 
 	for $*REPO.repo-chain {
-		given {
-			when Comp::Repository::Installable {
-				for $_.installed -> $i {
-					for $i.meta<provides>.keys -> $p {
-						if $p ~~ /^ 'Color::Names::' (.+?)/ {
-							@color_lists_found.push $/[1];
-						}
+		when CompUnit::Repository::Installable {
+			for $_.installed -> $i {
+				for $i.meta<provides>.keys -> $p {
+					if $p ~~ /^ 'Color::Names::' (.+?)/ {
+						@color_lists_found.push: $/[1];
 					}
 				}
 			}
+		}
 
-			when Comp::Repository::FileSystem {
-				my $newpath = $_.prefix.add("Color/Names");
-				if $newpath.e {
-					for $newpath.dir(test ⇒ / '.' pm6?/) -> $f {
-						$f ~~ s/ '.' pm6? //;
-						@color_lists_found.push: $f;
-					}
+		when CompUnit::Repository::FileSystem {
+			my $newpath = $_.prefix.add("Color/Names");
+			if $newpath.e {
+				for $newpath.dir(test => / '.' pm6?/) -> $f {
+					$f ~~ s/ '.' pm6? //;
+					@color_lists_found.push: $f;
 				}
 			}
 		}
@@ -111,19 +108,21 @@ our @color_lists_found = @color_list;
 
 class Color::Names {
 
+	my class Lookup { ... }
+
 	has %!catalogs;
-	has Boolean $!use_color_obj;
-	has Boolean $!use_exeptions;
-	has Lookup $.lookup
+	has Bool $!use_color_obj;
+	has Bool $!use_exceptions;
+	has Lookup $.lookup;
 
 	# cw: Maybe add Color::Names::Color so that Lookup can use that object and
 	#     the helper methods hex() and rgb() can be added to a Role?
 
-	my class Color::Names::Lookup {
+	my class Lookup {
 
 		method FALLBACK($name, |C) {
 			my $new_meth = method (:$obj) {
-				$color($name, :$obj);
+				.color($name, :$obj);
 			}
 			self.^add_method($name, $new_meth);
 			self.^compose;
@@ -132,19 +131,19 @@ class Color::Names {
 
 	}
 
-	method new(@catalogs, :$obj) {
-		self.bless(:@catalogs, :$obj, :$exceptions);
+	method new(@catalogs, :$obj, :$use_exceptions) {
+		self.bless(:@catalogs, :$obj, :$use_exceptions);
 	}
 
 	submethod BUILD (
 		:@catalogs,
 		:$obj,
-		:$exceptions
+		:$use_exceptions
 	) {
 		$!use_color_obj =  $obj.defined ?? $obj !! False;
-		$!use_exceptions = $exeptions.defined ?? $exceptions !! False;
-		$.lookup = Color::Names::Lookup.new;
-		load_catalogs(@catalogs);
+		$!use_exceptions = $use_exceptions // False;
+		$!lookup = Color::Names::Lookup.new;
+		.load_lists(@catalogs);
 	}
 
 	method always_use_obj {
@@ -165,12 +164,12 @@ class Color::Names {
 		( %!catalogs.keys.flat )
 	}
 
-	method load_list(@Pcats) {
+	method load_lists(@Pcats) {
 		# cw: Stop problematic duplicates from the get-go.
 		my @cats = @Pcats.unique;
 
 		unless (all(@cats) ~~ Str) {
-			if $!exceptions {
+			if $!use_exceptions {
 			} else {
 				warn "Illegal parameter found in call to load_catalog\n";
 				return;
@@ -184,14 +183,14 @@ class Color::Names {
 				#
 				# cw: Again, throw the proper exception if exception handling is requested.
 				#     Otherwise fail with the appropriate method.
-				if $!exceptions {
+				if $!use_exceptions {
 				} else {
-					say "Catalog '$n' already loaded!";
+					say "Catalog '$nc' already loaded!";
 					next;
 				}
 			}
 			# cw: Load catalog.
-			(try require ::("Color::Names::{$nc}") === Nil and {
+			if (try require ::("Color::Names::{$nc}")) === Nil {
 				# cw: TODO - Throw the proper exception if catalog does not exist, if
 				#            exception handling has been requested. Otherwise silently
 				#					   fail with proper message.
@@ -218,7 +217,7 @@ class Color::Names {
 	method color(Str $n, :$obj) {
 		my $retVal;
 
-		for (@color_list) -> $cl {
+		for (%.catalogs.keys) -> $cl {
 			my $c;
 			# TODO -- cw: Consider trying to cache data using the bind operator,
 			#         then checking that structure, FIRST. Note, key would need
@@ -253,7 +252,7 @@ class Color::Names {
 	}
 
 	method hex(Str $n) {
-		given color($n) {
+		given .color($n) {
 			# cw: Handle Color object, too.
 			#
 			#
@@ -272,7 +271,7 @@ class Color::Names {
 	}
 
 	method rgb(Str $n, :$hash) {
-		given color($n) {
+		given .color($n) {
 			# cw: Handle Color object, too.
 			#
 			#
