@@ -70,8 +70,8 @@ our @color_lists_found;
 			my $newpath = $_.prefix.add("Color/Names");
 			if $newpath.e {
 				for $newpath.dir(test => / '.' pm6?/) -> $f {
-					$f ~~ s/ '.' pm6? //;
-					@color_lists_found.push: $f;
+					(my $l = $f.basename) ~~ s/ '.' pm6? //;
+					@color_lists_found.push: $l;
 				}
 			}
 		}
