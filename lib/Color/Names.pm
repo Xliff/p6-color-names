@@ -119,10 +119,19 @@ class Color::Names {
 	#     the helper methods hex() and rgb() can be added to a Role?
 
 	my class Lookup {
+		has $!parent;
+
+		submethod BUILD (:$parent) {
+			$!parent = $parent;
+		}
+
+		method new($parent) {
+			self.bless(:$parent);
+		}
 
 		method FALLBACK($name, |C) {
 			my $new_meth = method (:$obj) {
-				.color($name, :$obj);
+				$parent.color($name, :$obj);
 			}
 			self.^add_method($name, $new_meth);
 			self.^compose;
@@ -142,7 +151,7 @@ class Color::Names {
 	) {
 		$!use_color_obj =  $obj.defined ?? $obj !! False;
 		$!use_exceptions = $use_exceptions // False;
-		$!lookup = Color::Names::Lookup.new;
+		$!lookup = Color::Names::Lookup.new(self);
 		.load_lists(@catalogs);
 	}
 
